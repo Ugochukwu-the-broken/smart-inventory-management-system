@@ -1,54 +1,70 @@
-import json
-import urllib.request
-import urllib.parse
 
+"""api.py - External product lookup for the Smart Inventory Management System.
 
-API_URL = "https://dummyjson.com/products/search?q="
+Searches the DummyJSON API by product name and returns the first match
+(category, price, brand, rating, description).
+
+    pip install requests
+"""
+import requests
+
+API_URL = "https://dummyjson.com/products/search"
+TIMEOUT = 10  # seconds
 
 
 def search_product_api(product_name):
+    """Look up a product by name.
+
+    Returns a dict:
+      {"success": True,  "product": {...}}   product found
+      {"success": False, "message": "..."}   empty input, not found, or error
+    """
+    product_name = (product_name or "").strip()
+    if not product_name:
+        return {"success": False, "message": "Please enter a product name."}
 
     try:
+        response = requests.get(API_URL, params={"q": product_name}, timeout=TIMEOUT)
+        response.raise_for_status()
+        data = response.json()
+    except requests.exceptions.ConnectionError:
+        return {"success": False, "message": "Connection failed. Check your internet connection."}
+    except requests.exceptions.Timeout:
+        return {"success": False, "message": "The request timed out. Please try again."}
+    except (requests.exceptions.RequestException, ValueError):
+        return {"success": False, "message": "Could not retrieve product information."}
 
-        encoded_name = urllib.parse.quote(product_name)
+    products = data.get("products", [])
+    if not products:
+        return {"success": False, "message": f"No product found for '{product_name}'."}
 
-        url = API_URL + encoded_name
+    item = products[0]  # first matching product
+    return {
+        "success": True,
+        "product": {
+            "name": item.get("title", "N/A"),
+            "category": item.get("category", "N/A"),
+            "price": item.get("price", "N/A"),
+            "brand": item.get("brand", "N/A"),
+            "rating": item.get("rating", "N/A"),
+            "description": item.get("description", "N/A"),
+        },
+    }
 
-        request = urllib.request.Request(
-            url,
-            headers={
-                "User-Agent": "Smart Inventory System"
-            }
-        )
 
-        response = urllib.request.urlopen(
-            request,
-            timeout=10
-        )
+def format_product(product):
+    """Turn a product dict into text for display in the GUI."""
+    return (
+        f"Name: {product['name']}\n"
+        f"Category: {product['category']}\n"
+        f"Price: ${product['price']}\n"
+        f"Brand: {product['brand']}\n"
+        f"Rating: {product['rating']}\n"
+        f"Description: {product['description']}"
+    )
 
-        data = response.read().decode("utf-8")
 
-        result = json.loads(data)
-
-        if len(result.get("products", [])) == 0:
-            return None, "No product found from API."
-
-        product = result["products"][0]
-
-        api_product = {
-            "name": product.get("title", "Unknown"),
-            "category": product.get("category", "Unknown"),
-            "price": product.get("price", 0),
-            "brand": product.get("brand", "Not available"),
-            "rating": product.get("rating", 0),
-            "description": product.get(
-                "description",
-                "No description available."
-            )
-        }
-
-        return api_product, "Product information retrieved successfully."
-
-    except Exception as error:
-
-        return None, "API connection failed: " + str(error)
+if __name__ == "__main__":
+    result = search_product_api(input("Product name: "))
+    print(format_product(result["product"]) if result["success"] else result["message"])
+ main
