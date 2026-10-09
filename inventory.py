@@ -1,3 +1,4 @@
+
 FILE_NAME = "products.csv"
 SALES_FILE = "sales.csv"
 
@@ -253,3 +254,4 @@ def get_sales():
         create_files()
 
     return sales
+ main

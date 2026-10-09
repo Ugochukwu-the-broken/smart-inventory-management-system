@@ -1,3 +1,4 @@
+
 """api.py - External product lookup for the Smart Inventory Management System.
 
 Searches the DummyJSON API by product name and returns the first match
@@ -66,3 +67,4 @@ def format_product(product):
 if __name__ == "__main__":
     result = search_product_api(input("Product name: "))
     print(format_product(result["product"]) if result["success"] else result["message"])
+ main

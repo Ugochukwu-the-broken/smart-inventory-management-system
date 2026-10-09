@@ -1,3 +1,4 @@
+
 def analyze_inventory(products):
 
     recommendations = []
@@ -110,3 +111,4 @@ def get_ai_summary(products):
         + " products were analyzed. "
         "Current stock levels look healthy."
     )
+ main
